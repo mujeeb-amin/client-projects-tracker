@@ -77,3 +77,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/reports', [ReportController::class, 'index'])
     ->middleware('auth')
     ->name('reports.index');
+
+
+// Route::ger(text)
