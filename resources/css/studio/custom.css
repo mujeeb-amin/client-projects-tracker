@@ -1,0 +1,345 @@
+
+/* Header */
+#header.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 0 16px;
+}
+
+/* Brand and menu button */
+#header .navbar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 12px;
+    min-width: 0;
+}
+
+#header .navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    margin: 0;
+}
+
+/* Toggle button */
+#header #sidebarToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* User information */
+#header .navbar-nav {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+#header .navbar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Mobile */
+@media (max-width: 767.98px) {
+
+    #header.app-header {
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    #header .navbar-header {
+        gap: 8px;
+    }
+
+    #header .navbar-brand {
+        font-size: 14px;
+    }
+
+    #header .navbar-user-info .fw-semibold {
+        display: none;
+    }
+
+    #sidebar .sidebar-close-button strong {
+        display: none;
+    }
+
+
+
+    /* Sidebar toggle - no border */
+    #header #sidebarToggle {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none;
+        border-radius: 0;
+        padding: 6px;
+        cursor: pointer;
+    }
+
+    #header #sidebarToggle:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+    }
+
+    
+/* /// */
+
+/* =================================
+   RESPONSIVE DASHBOARD FIX
+================================= */
+
+/* Prevent flex children from overflowing */
+#app,
+#content.app-content {
+    min-width: 0;
+    max-width: 100%;
+}
+
+#content .row {
+    min-width: 0;
+}
+
+/* Cards */
+#content .row > [class*="col-"] {
+    min-width: 0;
+}
+
+#content .card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+#content .card-body {
+    min-width: 0;
+}
+
+/* Financial numbers */
+#content .card h2,
+#content .card h3 {
+    overflow-wrap: anywhere;
+}
+
+/* Tables */
+#content .table-responsive {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#content .table-responsive table {
+    width: 100%;
+    min-width: 500px;
+}
+
+/* Mobile */
+@media (max-width: 575.98px) {
+
+    #content.app-content {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding: 15px 10px !important;
+        box-sizing: border-box;
+    }
+
+    #content .card-body {
+        padding: 15px;
+    }
+
+    #content .card-header {
+        gap: 10px;
+    }
+
+    #content .card-header h5 {
+        font-size: 16px;
+    }
+
+    #content .page-header {
+        font-size: 20px;
+        overflow-wrap: anywhere;
+    }
+}
+
+
+/* Content overflow protection */
+#content.app-content {
+    min-width: 0;
+}
+
+/* Responsive table */
+#content .table-responsive {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#content .table-responsive > table {
+    min-width: 600px;
+    margin-bottom: 0;
+}
+
+/* Mobile card widths */
+@media (max-width: 575.98px) {
+    #content .card {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    #content .card-body {
+        min-width: 0;
+    }
+}
+
+}
+/* =====================================
+   HEADER USER INFORMATION
+===================================== */
+
+#header .navbar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-right: 12px;
+}
+
+/* User Icon */
+#header .header-user-icon {
+    width: 36px;
+    height: 36px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #e8f0fe;
+    color: #2563eb;
+
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Username */
+#header .header-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+}
+
+/* Mobile */
+@media (max-width: 575.98px) {
+
+    #header .navbar-user-info {
+        gap: 6px;
+        padding-right: 0;
+    }
+
+    #header .header-user-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    #header .header-user-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    #header .header-user-name {
+        font-size: 12px;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+/* =====================================
+   PAGE LOADING PROGRESS BAR
+===================================== */
+
+/* Progress bar */
+.pace .pace-progress {
+    background: #2563eb !important;
+    height: 4px !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 99999 !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.6) !important;
+}
+
+/* Hide additional progress indicators */
+.pace .pace-progress-inner {
+    box-shadow: none !important;
+}
+
+/* Spinner */
+.pace .pace-activity {
+    border-top-color: #2563eb !important;
+    border-left-color: #2563eb !important;
+}
+/* Financial Reports Reset Button */
+
+.report-reset-btn {
+    border: 1px solid #64748b !important;
+    color: #475569 !important;
+    background-color: #ffffff !important;
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.report-reset-btn:hover {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+}
+
+/* =====================================
+   SIDEBAR USER MANAGEMENT FIX
+===================================== */
+
+#sidebar .menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+#sidebar .menu-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    display: block;
+}
+
+#sidebar .menu-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#sidebar .menu-text {
+    min-width: 0;
+}
+.profile-header-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}

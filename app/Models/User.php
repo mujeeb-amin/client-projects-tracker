@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -34,6 +35,19 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        return in_array(
+            $permission,
+            $this->permissions ?? [],
+            true
+        );
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -44,6 +58,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'permissions' => 'array',
         ];
     }
 }

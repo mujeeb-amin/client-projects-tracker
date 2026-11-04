@@ -46,6 +46,7 @@ class ClientController extends Controller
     public function edit($id){
         $client = Client::findOrFail($id);
         
+        if (request()->expectsJson()) return response()->json($client->only(['id','name','phone','email','company_name','address']));
         return view('clients.edit', compact('client'));
     }
 
@@ -69,18 +70,47 @@ class ClientController extends Controller
 
         $client->save();
 
+        if ($request->expectsJson()) return response()->json($client->only(['id','name','phone','email','company_name','address']));
+        return redirect('/clients')->with('success', 'Client updated successfully.');
+
+    }
+public function destroy($id)
+{
+    $client = Client::findOrFail($id);
+
+    // Check related projects
+    $hasProjects = \App\Models\Project::where(
+        'client_id',
+        $client->id
+    )->exists();
+
+    if ($hasProjects) {
+
+        $message = 'This client has existing projects and cannot be deleted. Please delete or reassign the related projects first.';
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message
+            ], 409);
+        }
+
         return redirect('/clients')
-            ->with('success', 'Client updated successfully.');
-
+            ->withErrors(['delete' => $message]);
     }
 
-    public function destroy($id){
-        
-        $client = Client::findOrFail($id);
-        $client->delete();
-        return redirect('/clients')->with('success', 'Client deleted successfully');
+    $client->delete();
 
+    if (request()->expectsJson()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Client deleted successfully.'
+        ]);
     }
+
+    return redirect('/clients')
+        ->with('success', 'Client deleted successfully.');
+}
 
 
 }

@@ -1,0 +1,23 @@
+IMPORTANT: Do not overwrite routes/web.php, User.php, or current profile modal. Integrate steps:
+
+1) Add migration and 2 controllers + users/index.blade.php to matching paths.
+2) Run php artisan migrate.
+3) In routes/web.php add:
+use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\AccountDetailsController;
+Route::middleware('auth')->group(function () {
+ Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+ Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+ Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+ Route::put('/account/details', [AccountDetailsController::class, 'update'])->name('account.details.update');
+});
+4) User model: add 'role' to $fillable OR leave it out and create super admin via forceFill/DB. Recommended: leave it OUT of $fillable to prevent request mass assignment. Controller store explicitly sets role:'user', which requires role fillable; so ADD 'role' to $fillable, but NEVER pass validated request role or request()->all() to create/update. For stronger defense use model guarded role + assign explicitly. Current controller uses explicit role.
+5) In .env application, use only one super admin. From php artisan tinker:
+   $u = App\Models\User::where('email','ADMIN_EMAIL_YOU_OWN')->firstOrFail();
+   $u->role = 'super_admin'; $u->save();
+   (Keep this email private, do not write it into public source code.)
+6) The profile modal currently supports password change. To allow normal users to edit name/email inside the existing modal, add a dedicated form and JS PUT /account/details and omit that form for super admin. Use @if(auth()->user()->role !== 'super_admin') around it. Super admin only sees password form. Do not rely only on hiding UI; server prevents editing.
+7) Add menu item to sidebar, wrapped by @if(auth()->user()?->role === 'super_admin') with href="{{ route('users.index') }}".
+8) Make sure layout <head> includes <meta name="csrf-token" content="{{ csrf_token() }}"> and before </body> includes @stack('scripts').
+9) Protect other existing routes for clients, projects, payments with auth middleware, not only Dashboard. Check whether normal users should have edit/delete permissions outside User Management.
+10) php artisan optimize:clear ; php artisan route:list --path=users

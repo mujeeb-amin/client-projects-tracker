@@ -8,56 +8,78 @@ use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
-    public function create(){
-        $clients = Client::all();
+    // نمایش فرم افزودن پروژه
+    public function create()
+    {
+        $clients = Client::orderBy('name')->get();
 
         return view('projects.create', compact('clients'));
     }
 
-    
-    public function store(Request $request){
-
-        $request->validate([
+    // ذخیره پروژه جدید
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'title' => 'required|max:255',
+            'title' => 'required|string|max:255',
             'agreed_price' => 'required|numeric|min:0',
             'deadline' => 'required|date',
             'status' => 'required|in:ongoing,completed',
         ]);
 
-        $project = new Project();
-
-        $project->client_id = $request->client_id;
-        $project->title = $request->title;
-        $project->agreed_price = $request->agreed_price;
-        $project->deadline = $request->deadline;
-        $project->status = $request->status;
-
-        $project->save();
+        Project::create($validated);
 
         return redirect('/projects')
             ->with('success', 'Project added successfully.');
     }
 
-    public function index(){
-        $projects = Project::with('client')->withSum('payments', 'amount')->get();
+    // نمایش لیست پروژه‌ها
+    public function index()
+    {
+        $projects = Project::with('client')
+            ->withSum('payments', 'amount')
+            ->latest()
+            ->get();
 
-        return view('projects.index', compact('projects'));
+        $editClients = Client::orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('projects.index', compact(
+            'projects',
+            'editClients'
+        ));
     }
 
-    public function edit($id){
+    // نمایش اطلاعات یک پروژه برای ویرایش
+    public function edit($id)
+    {
         $project = Project::findOrFail($id);
-        $clients = Client::all();
 
-        return view('projects.edit', compact('project', 'clients'));
+        if (request()->expectsJson()) {
+            return response()->json([
+                'id' => $project->id,
+                'client_id' => $project->client_id,
+                'title' => $project->title,
+                'agreed_price' => $project->agreed_price,
+                'deadline' => $project->deadline,
+                'status' => $project->status,
+            ]);
+        }
+
+        $clients = Client::orderBy('name')->get();
+
+        return view('projects.edit', compact(
+            'project',
+            'clients'
+        ));
     }
 
-
-    public function update(Request $request, $id){
-
-        $request->validate([
+    // به‌روزرسانی پروژه
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'title' => 'required|max:255',
+            'title' => 'required|string|max:255',
             'agreed_price' => 'required|numeric|min:0',
             'deadline' => 'required|date',
             'status' => 'required|in:ongoing,completed',
@@ -65,25 +87,49 @@ class ProjectController extends Controller
 
         $project = Project::findOrFail($id);
 
-        $project->client_id = $request->client_id;
-        $project->title = $request->title;
-        $project->agreed_price = $request->agreed_price;
-        $project->deadline = $request->deadline;
-        $project->status = $request->status;
+        $project->update($validated);
 
-        $project->save();
+        if ($request->expectsJson()) {
+
+            $project->load('client');
+
+            $received = (float) $project->payments()
+                ->sum('amount');
+
+            $remaining = (float) $project->agreed_price
+                - $received;
+
+            return response()->json([
+                'id' => $project->id,
+                'client_name' => $project->client?->name,
+                'title' => $project->title,
+                'agreed_price' => (float) $project->agreed_price,
+                'received' => $received,
+                'remaining' => $remaining,
+                'deadline' => $project->deadline,
+                'status' => $project->status,
+            ]);
+        }
 
         return redirect('/projects')
             ->with('success', 'Project updated successfully.');
     }
 
-    public function destroy($id){
+    // حذف پروژه
+    public function destroy($id)
+    {
         $project = Project::findOrFail($id);
+
         $project->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'message' => 'Deleted successfully.',
+                'id' => (int) $id,
+            ]);
+        }
 
         return redirect('/projects')
             ->with('success', 'Project deleted successfully.');
     }
-
-    
 }

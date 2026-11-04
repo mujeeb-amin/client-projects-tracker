@@ -1,45 +1,102 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login - Client Projects Tracker</title>
-</head>
-<body>
+@extends('layouts.guest')
 
-    <h1>Login</h1>
+@section('title', 'Sign In')
 
-    @if ($errors->any())
-        @foreach ($errors->all() as $error)
-            <p>{{ $error }}</p>
-        @endforeach
-    @endif
+@section('content')
 
-    <form action="/login" method="POST">
+<div class="login">
 
-        @csrf
+    <div class="login-content">
 
-        <label>Email:</label>
-        <input type="email"
-               name="email"
-               value="{{ old('email') }}"
-               required>
+        <form method="POST"
+              action="{{ route('login.submit') }}">
 
-        <br><br>
+            @csrf
 
-        <label>Password:</label>
-        <input type="password"
-               name="password"
-               required>
+            <h1 class="text-center mb-2">
+                Sign In
+            </h1>
 
-        <br><br>
+            <p class="text-muted text-center mb-3">
+                Client Projects Tracker
+            </p>
 
-        <button type="submit">Login</button>
+            {{-- Error Messages --}}
+            @if ($errors->any())
 
-    </form>
+                <div class="alert alert-danger" role="alert">
+                    {{ $errors->first() }}
+                </div>
 
-    <p>
-        Don't have an account?
-        <a href="/register">Register</a>
-    </p>
+            @endif
 
-</body>
-</html>
+            {{-- Email --}}
+            <div class="mb-3">
+
+                <label class="form-label" for="email">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value="{{ old('email') }}"
+                    class="form-control @error('email') is-invalid @enderror"
+                    required
+                    autocomplete="username"
+                    autofocus
+                    placeholder="you@example.com"
+                >
+
+            </div>
+
+            {{-- Password --}}
+            <div class="mb-3">
+
+                <label class="form-label" for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    class="form-control @error('password') is-invalid @enderror"
+                    required
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                >
+
+            </div>
+
+            {{-- Login Button --}}
+            <button
+                type="submit"
+                class="btn btn-theme d-block w-100 fw-500 mb-2"
+            >
+                Sign In
+            </button>
+
+            {{-- Register Link --}}
+            @if (Route::has('register'))
+
+                <div class="text-center text-muted mt-2">
+
+                    Don't have an account?
+
+                    <a href="{{ route('register') }}">
+                        Sign Up
+                    </a>
+
+                </div>
+
+            @endif
+
+        </form>
+
+    </div>
+
+</div>
+
+@endsection

@@ -5,35 +5,105 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-
     public function index()
     {
-        $totalClients = Client::count();
+        // Get authenticated user
+        $user = Auth::user();
 
-        $totalProjects = Project::count();
+        // =====================================
+        // CHECK PERMISSIONS
+        // =====================================
 
-        $ongoingProjects = Project::where('status', 'ongoing')->count();
+        $canViewClients = $user->hasPermission('clients.view');
 
-        $completedProjects = Project::where('status', 'completed')->count();
+        $canViewProjects = $user->hasPermission('projects.view');
 
-        $totalAgreed = Project::sum('agreed_price');
+        $canViewPayments = $user->hasPermission('payments.view');
 
-        $totalReceived = Payment::sum('amount');
+        $canViewReports = $user->hasPermission('reports.view');
 
-        $remainingBalance = $totalAgreed - $totalReceived;
 
-        $recentProjects = Project::with('client')
-            ->latest()
-            ->take(5)
-            ->get();
+        // =====================================
+        // CLIENT STATISTICS
+        // =====================================
 
-        $recentPayments = Payment::with('project.client')
-            ->latest()
-            ->take(5)
-            ->get();
+        $totalClients = 0;
+
+        if ($canViewClients) {
+            $totalClients = Client::count();
+        }
+
+
+        // =====================================
+        // PROJECT STATISTICS
+        // =====================================
+
+        $totalProjects = 0;
+        $ongoingProjects = 0;
+        $completedProjects = 0;
+        $recentProjects = collect();
+
+        if ($canViewProjects) {
+
+            $totalProjects = Project::count();
+
+            $ongoingProjects = Project::where(
+                'status',
+                'ongoing'
+            )->count();
+
+            $completedProjects = Project::where(
+                'status',
+                'completed'
+            )->count();
+
+            $recentProjects = Project::with('client')
+                ->latest()
+                ->take(5)
+                ->get();
+        }
+
+
+        // =====================================
+        // FINANCIAL STATISTICS
+        // =====================================
+
+        $totalAgreed = 0;
+        $totalReceived = 0;
+        $remainingBalance = 0;
+
+        if ($canViewReports) {
+
+            $totalAgreed = Project::sum('agreed_price');
+
+            $totalReceived = Payment::sum('amount');
+
+            $remainingBalance = $totalAgreed - $totalReceived;
+        }
+
+
+        // =====================================
+        // RECENT PAYMENTS
+        // =====================================
+
+        $recentPayments = collect();
+
+        if ($canViewPayments) {
+
+            $recentPayments = Payment::with('project.client')
+                ->latest()
+                ->take(5)
+                ->get();
+        }
+
+
+        // =====================================
+        // RETURN DASHBOARD VIEW
+        // =====================================
 
         return view('dashboard', compact(
             'totalClients',
@@ -47,5 +117,4 @@ class DashboardController extends Controller
             'recentPayments'
         ));
     }
-
 }

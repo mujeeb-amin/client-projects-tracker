@@ -1,0 +1,7 @@
+// Add before any broad /payments/{id} route, and protect with auth:
+Route::get('/payments/{id}/receipt', [PaymentController::class, 'receipt'])
+    ->middleware('auth')->name('payments.receipt');
+Route::get('/payments/{id}/receipt/pdf', [PaymentController::class, 'downloadReceipt'])
+    ->middleware('auth')->name('payments.receipt.pdf');
+
+// Also make sure /payments/create, POST /payments, and other payment CRUD routes have auth middleware.

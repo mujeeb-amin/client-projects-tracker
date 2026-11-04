@@ -6,116 +6,172 @@
 
 @section('content')
 
-<!-- ===================================== -->
-<!-- DATE FILTER -->
-<!-- ===================================== -->
+@php
+    // Get authenticated user
+    $user = auth()->user();
 
-<div class="card border-0 shadow-sm mb-4">
+    // Check financial reports permission
+    $canViewReports = $user && $user->hasPermission('reports.view');
+@endphp
 
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0">Filter Payments by Date</h5>
-    </div>
+@if($canViewReports)
 
-    <div class="card-body">
+    <!-- ===================================== -->
+    <!-- DATE FILTER -->
+    <!-- ===================================== -->
 
-        <form action="{{ route('reports.index') }}" method="GET">
+    <div class="card border-0 shadow-sm mb-4">
 
-            <div class="row g-3 align-items-end">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Filter Payments by Date</h5>
+        </div>
 
-                <!-- Start Date -->
-                <div class="col-md-4">
+        <div class="card-body">
 
-                    <label for="start_date" class="form-label">
-                        Start Date
-                    </label>
+            <form action="{{ route('reports.index') }}" method="GET">
 
-                    <input
-                        type="date"
-                        id="start_date"
-                        name="start_date"
-                        value="{{ old('start_date', $startDate) }}"
-                        class="form-control @error('start_date') is-invalid @enderror"
-                    >
+                <div class="row g-3 align-items-end">
 
-                    @error('start_date')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
+                    <!-- Start Date -->
+                    <div class="col-md-4">
 
-                </div>
+                        <label for="start_date" class="form-label">
+                            Start Date
+                        </label>
 
-                <!-- End Date -->
-                <div class="col-md-4">
+                        <input
+                            type="date"
+                            id="start_date"
+                            name="start_date"
+                            value="{{ old('start_date', $startDate) }}"
+                            class="form-control @error('start_date') is-invalid @enderror"
+                        >
 
-                    <label for="end_date" class="form-label">
-                        End Date
-                    </label>
+                        @error('start_date')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
 
-                    <input
-                        type="date"
-                        id="end_date"
-                        name="end_date"
-                        value="{{ old('end_date', $endDate) }}"
-                        class="form-control @error('end_date') is-invalid @enderror"
-                    >
+                    </div>
 
-                    @error('end_date')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
+                    <!-- End Date -->
+                    <div class="col-md-4">
 
-                </div>
+                        <label for="end_date" class="form-label">
+                            End Date
+                        </label>
 
-                <!-- Buttons -->
-                <div class="col-md-4">
+                        <input
+                            type="date"
+                            id="end_date"
+                            name="end_date"
+                            value="{{ old('end_date', $endDate) }}"
+                            class="form-control @error('end_date') is-invalid @enderror"
+                        >
 
-                    <div class="d-flex gap-2">
+                        @error('end_date')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
 
-                        <button type="submit"
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-md-4">
+
+                        <div class="d-flex gap-2">
+
+                            <button
+                                type="submit"
                                 class="btn btn-primary flex-fill">
-                            Filter
-                        </button>
+                                Filter
+                            </button>
 
-                        <a href="{{ route('reports.index') }}"
-                           class="btn btn-outline-secondary">
-                            Reset
-                        </a>
+                            <a
+                                href="{{ route('reports.index') }}"
+                                class="btn btn-outline-secondary report-reset-btn">
+                                Reset
+                            </a>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
+            </form>
 
-        </form>
+        </div>
 
     </div>
 
-</div>
 
+    <!-- ===================================== -->
+    <!-- SUMMARY CARDS -->
+    <!-- ===================================== -->
 
-<!-- ===================================== -->
-<!-- SUMMARY CARDS -->
-<!-- ===================================== -->
+    <div class="row g-4 mb-4">
 
-<div class="row g-4 mb-4">
+        <!-- Total Agreed -->
+        <div class="col-md-4">
 
-    <!-- Total Agreed -->
-    <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
 
-        <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
 
-            <div class="card-body">
+                    <h6 class="text-muted">
+                        Total Agreed
+                    </h6>
 
-                <h6 class="text-muted">
-                    Total Agreed
-                </h6>
+                    <h3 class="fw-bold mb-0">
+                        ${{ number_format($totalAgreed, 2) }}
+                    </h3>
 
-                <h3 class="fw-bold mb-0">
-                    ${{ number_format($totalAgreed, 2) }}
-                </h3>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Total Received -->
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Total Received
+                    </h6>
+
+                    <h3 class="fw-bold text-success mb-0">
+                        ${{ number_format($totalReceived, 2) }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Remaining Balance -->
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Remaining Balance
+                    </h6>
+
+                    <h3 class="fw-bold text-danger mb-0">
+                        ${{ number_format($remainingBalance, 2) }}
+                    </h3>
+
+                </div>
 
             </div>
 
@@ -123,20 +179,43 @@
 
     </div>
 
-    <!-- Total Received -->
-    <div class="col-md-4">
 
-        <div class="card border-0 shadow-sm h-100">
+    <!-- ===================================== -->
+    <!-- OVERALL PAYMENT PROGRESS -->
+    <!-- ===================================== -->
 
-            <div class="card-body">
+    @php
+        $overallProgress = $totalAgreed > 0
+            ? min(100, max(0, ($totalReceived / $totalAgreed) * 100))
+            : 0;
+    @endphp
 
-                <h6 class="text-muted">
-                    Total Received
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between mb-2">
+
+                <h6 class="mb-0">
+                    Overall Payment Progress
                 </h6>
 
-                <h3 class="fw-bold text-success mb-0">
-                    ${{ number_format($totalReceived, 2) }}
-                </h3>
+                <span class="fw-semibold">
+                    {{ number_format($overallProgress, 1) }}%
+                </span>
+
+            </div>
+
+            <div class="progress" style="height: 15px;">
+
+                <div
+                    class="progress-bar bg-success"
+                    role="progressbar"
+                    style="width: {{ $overallProgress }}%;"
+                    aria-valuenow="{{ $overallProgress }}"
+                    aria-valuemin="0"
+                    aria-valuemax="100">
+                </div>
 
             </div>
 
@@ -144,339 +223,310 @@
 
     </div>
 
-    <!-- Remaining Balance -->
-    <div class="col-md-4">
 
-        <div class="card border-0 shadow-sm h-100">
+    <!-- ===================================== -->
+    <!-- FILTERED RECEIVED -->
+    <!-- ===================================== -->
 
-            <div class="card-body">
+    <div class="card border-0 shadow-sm mb-4">
 
-                <h6 class="text-muted">
-                    Remaining Balance
-                </h6>
+        <div class="card-body">
 
-                <h3 class="fw-bold text-danger mb-0">
-                    ${{ number_format($remainingBalance, 2) }}
-                </h3>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                <div>
+
+                    <h6 class="text-muted mb-1">
+                        Received in Selected Period
+                    </h6>
+
+                    <h3 class="fw-bold text-success mb-0">
+                        ${{ number_format($filteredReceived, 2) }}
+                    </h3>
+
+                </div>
+
+                <span class="badge bg-primary fs-6">
+                    {{ $payments->count() }} Payments
+                </span>
 
             </div>
+
+            <small class="text-muted d-block mt-2">
+
+                @if($startDate || $endDate)
+
+                    Period:
+                    {{ $startDate ?: 'Beginning' }}
+                    to
+                    {{ $endDate ?: 'Today / Latest' }}
+
+                @else
+
+                    Showing all payment dates
+
+                @endif
+
+            </small>
 
         </div>
 
     </div>
 
-</div>
 
+    <!-- ===================================== -->
+    <!-- PAYMENTS IN SELECTED PERIOD -->
+    <!-- ===================================== -->
 
-<!-- ===================================== -->
-<!-- OVERALL PAYMENT PROGRESS -->
-<!-- ===================================== -->
+    <div class="card border-0 shadow-sm mb-4">
 
-@php
-    $overallProgress = $totalAgreed > 0
-        ? min(100, max(0, ($totalReceived / $totalAgreed) * 100))
-        : 0;
-@endphp
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
 
-<div class="card border-0 shadow-sm mb-4">
+            <h5 class="mb-0">
+                Payments in Selected Period
+            </h5>
 
-    <div class="card-body">
-
-        <div class="d-flex justify-content-between mb-2">
-
-            <h6 class="mb-0">
-                Overall Payment Progress
-            </h6>
-
-            <span class="fw-semibold">
-                {{ number_format($overallProgress, 1) }}%
+            <span class="badge bg-secondary">
+                {{ $payments->count() }} Records
             </span>
 
         </div>
 
-        <div class="progress" style="height: 15px;">
+        <div class="card-body">
 
-            <div
-                class="progress-bar bg-success"
-                role="progressbar"
-                style="width: {{ $overallProgress }}%;"
-                aria-valuenow="{{ $overallProgress }}"
-                aria-valuemin="0"
-                aria-valuemax="100">
+            <div class="table-responsive">
+
+                <table class="table table-hover table-striped align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Project</th>
+                            <th>Task</th>
+                            <th>Amount</th>
+                            <th>Payment Date</th>
+                            <th>Note</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse($payments as $payment)
+
+                            <tr>
+
+                                <td>
+                                    {{ $payment->id }}
+                                </td>
+
+                                <td>
+                                    {{ $payment->project?->client?->name ?? 'N/A' }}
+                                </td>
+
+                                <td class="fw-semibold">
+                                    {{ $payment->project?->title ?? 'N/A' }}
+                                </td>
+
+                                <td>
+                                    {{ $payment->task }}
+                                </td>
+
+                                <td class="text-success fw-semibold">
+                                    ${{ number_format($payment->amount, 2) }}
+                                </td>
+
+                                <td>
+                                    {{ $payment->payment_date }}
+                                </td>
+
+                                <td>
+                                    {{ $payment->note ?? '-' }}
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="text-center text-muted py-4">
+
+                                    No payments found for this period.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
             </div>
 
         </div>
 
     </div>
 
-</div>
 
+    <!-- ===================================== -->
+    <!-- PROJECTS FINANCIAL DETAILS -->
+    <!-- ===================================== -->
 
-<!-- ===================================== -->
-<!-- FILTERED RECEIVED -->
-<!-- ===================================== -->
+    <div class="card border-0 shadow-sm mb-4">
 
-<div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
 
-    <div class="card-body">
-
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-
-            <div>
-
-                <h6 class="text-muted mb-1">
-                    Received in Selected Period
-                </h6>
-
-                <h3 class="fw-bold text-success mb-0">
-                    ${{ number_format($filteredReceived, 2) }}
-                </h3>
-
-            </div>
-
-            <span class="badge bg-primary fs-6">
-                {{ $payments->count() }} Payments
-            </span>
+            <h5 class="mb-0">
+                Projects Financial Details
+            </h5>
 
         </div>
 
-        <small class="text-muted d-block mt-2">
-            @if($startDate || $endDate)
-                Period:
-                {{ $startDate ?: 'Beginning' }}
-                to
-                {{ $endDate ?: 'Today / Latest' }}
-            @else
-                Showing all payment dates
-            @endif
-        </small>
+        <div class="card-body">
 
-    </div>
+            <div class="table-responsive">
 
-</div>
+                <table class="table table-hover table-striped align-middle">
 
-
-<!-- ===================================== -->
-<!-- PAYMENTS IN SELECTED PERIOD -->
-<!-- ===================================== -->
-
-<div class="card border-0 shadow-sm mb-4">
-
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-
-        <h5 class="mb-0">
-            Payments in Selected Period
-        </h5>
-
-        <span class="badge bg-secondary">
-            {{ $payments->count() }} Records
-        </span>
-
-    </div>
-
-    <div class="card-body">
-
-        <div class="table-responsive">
-
-            <table class="table table-hover table-striped align-middle">
-
-                <thead class="table-dark">
-
-                    <tr>
-                        <th>ID</th>
-                        <th>Client</th>
-                        <th>Project</th>
-                        <th>Task</th>
-                        <th>Amount</th>
-                        <th>Payment Date</th>
-                        <th>Note</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    @forelse($payments as $payment)
+                    <thead class="table-dark">
 
                         <tr>
-
-                            <td>
-                                {{ $payment->id }}
-                            </td>
-
-                            <td>
-                                {{ $payment->project?->client?->name ?? 'N/A' }}
-                            </td>
-
-                            <td class="fw-semibold">
-                                {{ $payment->project?->title ?? 'N/A' }}
-                            </td>
-
-                            <td>
-                                {{ $payment->task }}
-                            </td>
-
-                            <td class="text-success fw-semibold">
-                                ${{ number_format($payment->amount, 2) }}
-                            </td>
-
-                            <td>
-                                {{ $payment->payment_date }}
-                            </td>
-
-                            <td>
-                                {{ $payment->note ?? '-' }}
-                            </td>
-
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Project</th>
+                            <th>Agreed</th>
+                            <th>Received</th>
+                            <th>Remaining</th>
+                            <th>Progress</th>
                         </tr>
 
-                    @empty
+                    </thead>
 
-                        <tr>
+                    <tbody>
 
-                            <td colspan="7"
-                                class="text-center text-muted py-4">
+                        @forelse($projects as $project)
 
-                                No payments found for this period.
+                            @php
+                                $received = $project->payments_sum_amount ?? 0;
 
-                            </td>
+                                $remaining = $project->agreed_price - $received;
 
-                        </tr>
+                                $progress = $project->agreed_price > 0
+                                    ? min(100, max(0, ($received / $project->agreed_price) * 100))
+                                    : 0;
+                            @endphp
 
-                    @endforelse
+                            <tr>
 
-                </tbody>
+                                <td>
+                                    {{ $project->id }}
+                                </td>
 
-            </table>
+                                <td>
+                                    {{ $project->client?->name ?? 'N/A' }}
+                                </td>
 
-        </div>
+                                <td class="fw-semibold">
+                                    {{ $project->title }}
+                                </td>
 
-    </div>
+                                <td>
+                                    ${{ number_format($project->agreed_price, 2) }}
+                                </td>
 
-</div>
+                                <td class="text-success fw-semibold">
+                                    ${{ number_format($received, 2) }}
+                                </td>
 
+                                <td class="text-danger fw-semibold">
+                                    ${{ number_format($remaining, 2) }}
+                                </td>
 
-<!-- ===================================== -->
-<!-- PROJECTS FINANCIAL DETAILS -->
-<!-- ===================================== -->
-
-<div class="card border-0 shadow-sm mb-4">
-
-    <div class="card-header bg-white py-3">
-
-        <h5 class="mb-0">
-            Projects Financial Details
-        </h5>
-
-    </div>
-
-    <div class="card-body">
-
-        <div class="table-responsive">
-
-            <table class="table table-hover table-striped align-middle">
-
-                <thead class="table-dark">
-
-                    <tr>
-                        <th>ID</th>
-                        <th>Client</th>
-                        <th>Project</th>
-                        <th>Agreed</th>
-                        <th>Received</th>
-                        <th>Remaining</th>
-                        <th>Progress</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    @forelse($projects as $project)
-
-                        @php
-                            $received = $project->payments_sum_amount ?? 0;
-
-                            $remaining = $project->agreed_price - $received;
-
-                            $progress = $project->agreed_price > 0
-                                ? min(100, max(0, ($received / $project->agreed_price) * 100))
-                                : 0;
-                        @endphp
-
-                        <tr>
-
-                            <td>
-                                {{ $project->id }}
-                            </td>
-
-                            <td>
-                                {{ $project->client?->name ?? 'N/A' }}
-                            </td>
-
-                            <td class="fw-semibold">
-                                {{ $project->title }}
-                            </td>
-
-                            <td>
-                                ${{ number_format($project->agreed_price, 2) }}
-                            </td>
-
-                            <td class="text-success fw-semibold">
-                                ${{ number_format($received, 2) }}
-                            </td>
-
-                            <td class="text-danger fw-semibold">
-                                ${{ number_format($remaining, 2) }}
-                            </td>
-
-                            <td style="min-width: 150px;">
-
-                                <div class="progress mb-1"
-                                     style="height: 10px;">
+                                <td style="min-width: 150px;">
 
                                     <div
-                                        class="progress-bar bg-success"
-                                        role="progressbar"
-                                        style="width: {{ $progress }}%;"
-                                        aria-valuenow="{{ $progress }}"
-                                        aria-valuemin="0"
-                                        aria-valuemax="100">
+                                        class="progress mb-1"
+                                        style="height: 10px;">
+
+                                        <div
+                                            class="progress-bar bg-success"
+                                            role="progressbar"
+                                            style="width: {{ $progress }}%;"
+                                            aria-valuenow="{{ $progress }}"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100">
+                                        </div>
+
                                     </div>
 
-                                </div>
+                                    <small class="text-muted">
+                                        {{ number_format($progress, 1) }}%
+                                    </small>
 
-                                <small class="text-muted">
-                                    {{ number_format($progress, 1) }}%
-                                </small>
+                                </td>
 
-                            </td>
+                            </tr>
 
-                        </tr>
+                        @empty
 
-                    @empty
+                            <tr>
 
-                        <tr>
+                                <td
+                                    colspan="7"
+                                    class="text-center text-muted py-4">
 
-                            <td colspan="7"
-                                class="text-center text-muted py-4">
+                                    No financial records found.
 
-                                No financial records found.
+                                </td>
 
-                            </td>
+                            </tr>
 
-                        </tr>
+                        @endforelse
 
-                    @endforelse
+                    </tbody>
 
-                </tbody>
+                </table>
 
-            </table>
+            </div>
 
         </div>
 
     </div>
 
-</div>
+@else
+
+    <!-- ===================================== -->
+    <!-- ACCESS DENIED -->
+    <!-- ===================================== -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body text-center py-5">
+
+            <div class="mb-3">
+                <i class="fas fa-lock text-danger" style="font-size: 45px;"></i>
+            </div>
+
+            <h4 class="mb-2">
+                Access Denied
+            </h4>
+
+            <p class="text-muted mb-0">
+                You do not have permission to view financial reports.
+                Please contact your administrator.
+            </p>
+
+        </div>
+
+    </div>
+
+@endif
 
 @endsection

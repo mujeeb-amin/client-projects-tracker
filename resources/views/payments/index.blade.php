@@ -6,6 +6,17 @@
 
 @section('content')
 
+@php
+    $user = auth()->user();
+
+    $canCreate = $user && $user->hasPermission('payments.create');
+    $canEdit = $user && $user->hasPermission('payments.edit');
+    $canDelete = $user && $user->hasPermission('payments.delete');
+
+    $canManage = $canEdit || $canDelete;
+@endphp
+
+<!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center mb-4 gap-3 flex-wrap">
 
     <div>
@@ -15,9 +26,11 @@
         </p>
     </div>
 
-    <a href="/payments/create" class="btn btn-primary">
-        + Add Payment
-    </a>
+    @if($canCreate)
+        <a href="/payments/create" class="btn btn-primary">
+            + Add Payment
+        </a>
+    @endif
 
 </div>
 
@@ -28,7 +41,7 @@
             <div class="card-body">
                 <h6 class="text-muted">Total Received</h6>
 
-                <h3 class="text-success mb-0">
+                <h3 id="paymentsTotalReceived" class="text-success mb-0">
                     ${{ number_format($payments->sum('amount'), 2) }}
                 </h3>
             </div>
@@ -53,13 +66,18 @@
                         <th>Amount</th>
                         <th>Payment Date</th>
                         <th>Note</th>
-                        <th>Actions</th>
+
+                        @if($canManage)
+                            <th>Actions</th>
+                        @endif
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($payments as $payment)
-                        <tr>
+
+                        <tr data-row-id="{{ $payment->id }}">
+
                             <td>{{ $payment->id }}</td>
 
                             <td>
@@ -80,38 +98,53 @@
 
                             <td>{{ $payment->note }}</td>
 
-                            <td>
-                                <div class="d-flex gap-2">
+                            @if($canManage)
+                                <td>
+                                    <div class="d-flex gap-2">
 
-                                    <a href="/payments/{{ $payment->id }}/edit"
-                                       class="btn btn-warning btn-sm">
-                                        Edit
-                                    </a>
+                                        @if($canEdit)
+                                            <button
+                                                type="button"
+                                                class="btn btn-warning btn-sm js-edit"
+                                                data-id="{{ $payment->id }}">
+                                                Edit
+                                            </button>
+                                        @endif
 
-                                    <form
-                                        action="/payments/{{ $payment->id }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Delete this payment?')"
-                                    >
-                                        @csrf
-                                        @method('DELETE')
+                                        @if($canDelete)
+                                            <form
+                                                action="/payments/{{ $payment->id }}"
+                                                method="POST"
+                                                class="js-ajax-delete">
 
-                                        <button type="submit"
-                                                class="btn btn-danger btn-sm">
-                                            Delete
-                                        </button>
-                                    </form>
+                                                @csrf
+                                                @method('DELETE')
 
-                                </div>
-                            </td>
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-danger btn-sm">
+                                                    Delete
+                                                </button>
+
+                                            </form>
+                                        @endif
+
+                                    </div>
+                                </td>
+                            @endif
+
                         </tr>
+
                     @empty
+
                         <tr>
-                            <td colspan="8"
+                            <td
+                                colspan="{{ $canManage ? 8 : 7 }}"
                                 class="text-center text-muted py-4">
                                 No payments found.
                             </td>
                         </tr>
+
                     @endforelse
                 </tbody>
 
@@ -120,5 +153,433 @@
         </div>
     </div>
 </div>
+
+
+@if($canEdit)
+
+    <!-- AJAX Edit Dialog -->
+    <dialog
+        id="ajaxEditDialog"
+        class="ajax-edit-dialog"
+        aria-labelledby="ajaxEditHeading">
+
+        <div class="ajax-edit-head">
+
+            <h5 class="mb-0" id="ajaxEditHeading">
+                Edit Payment
+            </h5>
+
+            <button
+                type="button"
+                class="btn-close"
+                id="ajaxEditClose"
+                aria-label="Close">
+            </button>
+
+        </div>
+
+        <form id="ajaxEditForm">
+
+            <div class="ajax-edit-body">
+
+                <div
+                    id="ajaxEditErrors"
+                    class="alert alert-danger d-none"
+                    role="alert">
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="edit_project_id">
+                            Project
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="edit_project_id"
+                            name="project_id"
+                            required>
+
+                            @foreach($editProjects as $option)
+                                <option value="{{ $option->id }}">
+                                    {{ $option->title }} — {{ $option->client?->name }}
+                                </option>
+                            @endforeach
+
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="edit_task">
+                            Task
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="edit_task"
+                            name="task">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="edit_amount">
+                            Amount
+                        </label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="edit_amount"
+                            name="amount"
+                            step="0.01"
+                            min="0.01"
+                            required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="edit_payment_date">
+                            Payment Date
+                        </label>
+
+                        <input
+                            type="date"
+                            class="form-control"
+                            id="edit_payment_date"
+                            name="payment_date"
+                            required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="edit_note">
+                            Note
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            id="edit_note"
+                            name="note"
+                            rows="2">
+                        </textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="ajax-edit-foot">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="ajaxEditCancel">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="ajaxEditSave">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+    </dialog>
+
+    <div
+        id="ajaxEditSuccess"
+        class="alert alert-success mt-3 d-none"
+        role="status">
+    </div>
+
+    @push('styles')
+        <style>
+            .ajax-edit-dialog {
+                border: 0;
+                border-radius: 14px;
+                width: min(94vw, 680px);
+                max-height: 90dvh;
+                padding: 0;
+                box-shadow: 0 24px 70px #0004;
+            }
+
+            .ajax-edit-dialog::backdrop {
+                background: rgba(15, 23, 42, .58);
+            }
+
+            .ajax-edit-head,
+            .ajax-edit-foot {
+                padding: 16px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .ajax-edit-head {
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .ajax-edit-foot {
+                border-top: 1px solid #e5e7eb;
+                justify-content: flex-end;
+            }
+
+            .ajax-edit-body {
+                padding: 20px;
+                overflow: auto;
+                max-height: calc(90dvh - 145px);
+            }
+        </style>
+    @endpush
+
+    @push('scripts')
+        <script>
+            (() => {
+
+                const dialog = document.getElementById('ajaxEditDialog');
+                const form = document.getElementById('ajaxEditForm');
+                const errors = document.getElementById('ajaxEditErrors');
+                const save = document.getElementById('ajaxEditSave');
+                const success = document.getElementById('ajaxEditSuccess');
+
+                const editFields = [
+                    "project_id",
+                    "task",
+                    "amount",
+                    "payment_date",
+                    "note"
+                ];
+
+                let selectedId = null;
+                let currentRow = null;
+
+                const base = @json(url('/payments'));
+
+                const csrf = document.querySelector(
+                    'meta[name="csrf-token"]'
+                )?.content;
+
+                if (!csrf) {
+                    console.warn('Missing csrf-token meta tag in app layout.');
+                }
+
+                const showError = message => {
+                    errors.textContent = message;
+                    errors.classList.remove('d-none');
+                };
+
+                const clearError = () => {
+                    errors.textContent = '';
+                    errors.classList.add('d-none');
+                };
+
+                async function jsonRequest(url, options = {}) {
+
+                    const response = await fetch(url, {
+                        credentials: 'same-origin',
+
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+
+                            ...(options.body ? {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrf
+                            } : {})
+                        },
+
+                        ...options
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+
+                        const messages = data.errors
+                            ? Object.values(data.errors).flat().join('\n')
+                            : (
+                                data.message ||
+                                `Request failed (${response.status})`
+                            );
+
+                        throw Error(messages);
+                    }
+
+                    return data;
+                }
+
+                // Open Edit Modal
+                document.querySelectorAll('.js-edit').forEach(button => {
+
+                    button.addEventListener('click', async () => {
+
+                        selectedId = button.dataset.id;
+                        currentRow = button.closest('tr');
+
+                        clearError();
+                        success.classList.add('d-none');
+
+                        form.reset();
+
+                        dialog.showModal();
+
+                        save.disabled = true;
+
+                        try {
+
+                            const record = await jsonRequest(
+                                `${base}/${selectedId}/edit`
+                            );
+
+                            editFields.forEach(key => {
+
+                                const input = form.elements.namedItem(key);
+
+                                if (input) {
+
+                                    input.value = record[key] == null
+                                        ? ''
+                                        : String(record[key]).slice(
+                                            0,
+                                            key.endsWith('_date') ||
+                                            key === 'deadline'
+                                                ? 10
+                                                : undefined
+                                        );
+                                }
+
+                            });
+
+                        } catch (error) {
+
+                            showError(error.message);
+
+                        } finally {
+
+                            save.disabled = false;
+                        }
+
+                    });
+
+                });
+
+                // Close Modal
+                function close() {
+                    dialog.close();
+                }
+
+                document
+                    .getElementById('ajaxEditClose')
+                    .addEventListener('click', close);
+
+                document
+                    .getElementById('ajaxEditCancel')
+                    .addEventListener('click', close);
+
+                dialog.addEventListener('click', e => {
+
+                    if (e.target === dialog) {
+                        close();
+                    }
+
+                });
+
+                // Save Edited Payment
+                form.addEventListener('submit', async e => {
+
+                    e.preventDefault();
+
+                    clearError();
+
+                    if (!form.reportValidity()) {
+                        return;
+                    }
+
+                    save.disabled = true;
+                    save.textContent = 'Saving...';
+
+                    try {
+
+                        const payload = Object.fromEntries(
+                            new FormData(form).entries()
+                        );
+
+                        const result = await jsonRequest(
+                            `${base}/${selectedId}`,
+                            {
+                                method: 'PUT',
+                                body: JSON.stringify(payload)
+                            }
+                        );
+
+                        updateRow(result);
+
+                        dialog.close();
+
+                        success.textContent = 'Changes saved successfully.';
+                        success.classList.remove('d-none');
+
+                    } catch (error) {
+
+                        showError(error.message);
+
+                    } finally {
+
+                        save.disabled = false;
+                        save.textContent = 'Save Changes';
+                    }
+
+                });
+
+                // Update Table Row
+                function put(index, value) {
+
+                    const cell = currentRow?.cells[index];
+
+                    if (cell) {
+                        cell.textContent = value ?? '';
+                    }
+
+                }
+
+                const cash = value => '$' + Number(value || 0).toLocaleString(
+                    'en-US',
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                );
+
+                function updateRow(record) {
+
+                    put(1, record.client_name);
+                    put(2, record.project_title);
+                    put(3, record.task);
+                    put(4, cash(record.amount));
+                    put(5, record.payment_date);
+                    put(6, record.note);
+
+                    const total = document.getElementById(
+                        'paymentsTotalReceived'
+                    );
+
+                    if (total && record.total_received != null) {
+                        total.textContent = cash(record.total_received);
+                    }
+
+                }
+
+            })();
+        </script>
+    @endpush
+
+@endif
+
+
+@if($canDelete)
+    @include('partials.ajax-delete-modal')
+@endif
 
 @endsection

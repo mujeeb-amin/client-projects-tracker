@@ -1,46 +1,162 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
+@extends('layouts.guest')
 
-    <h1>Create Account</h1>
+@section('title', 'Sign Up')
 
-    <form action="/register" method="POST">
-        @csrf
+@section('content')
 
-        <label>Name:</label>
-        <input type="text" name="name" value="{{ old('name') }}" required>
-        @error('name')
-            <p>{{ $message }}</p>
-        @enderror
+<div class="register">
 
-        <br><br>
+    <div class="register-content">
 
-        <label>Email:</label>
-        <input type="email" name="email" value="{{ old('email') }}" required>
-        @error('email')
-            <p>{{ $message }}</p>
-        @enderror
+        <form action="{{ route('register.submit') }}"
+              method="POST">
 
-        <br><br>
+            @csrf
 
-        <label>Password:</label>
-        <input type="password" name="password" required>
-        @error('password')
-            <p>{{ $message }}</p>
-        @enderror
+            <h1 class="text-center mb-2">
+                Sign Up
+            </h1>
 
-        <br><br>
+            <p class="text-muted text-center mb-3">
+                Create your Client Tracker account
+            </p>
 
-        <label>Confirm Password:</label>
-        <input type="password" name="password_confirmation" required>
+            {{-- General Errors --}}
+            @if ($errors->any())
 
-        <br><br>
+                <div class="alert alert-danger">
+                    Please check the information below.
+                </div>
 
-        <button type="submit">Register</button>
-    </form>
+            @endif
 
-</body>
-</html>
+            {{-- Name --}}
+            <div class="mb-2">
+
+                <label for="name" class="form-label">
+                    Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value="{{ old('name') }}"
+                    class="form-control @error('name') is-invalid @enderror"
+                    required
+                    autocomplete="name"
+                    placeholder="Enter your name"
+                >
+
+                @error('name')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+
+            </div>
+
+            {{-- Email --}}
+            <div class="mb-2">
+
+                <label for="email" class="form-label">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    class="form-control @error('email') is-invalid @enderror"
+                    required
+                    autocomplete="username"
+                    placeholder="you@example.com"
+                >
+
+                @error('email')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+
+            </div>
+
+            {{-- Password --}}
+            <div class="mb-2">
+
+                <label for="password" class="form-label">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-control @error('password') is-invalid @enderror"
+                    required
+                    minlength="8"
+                    autocomplete="new-password"
+                    placeholder="Enter password"
+                >
+
+                @error('password')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+
+            </div>
+
+            {{-- Confirm Password --}}
+            <div class="mb-2">
+
+                <label for="password_confirmation"
+                       class="form-label">
+                    Confirm Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    class="form-control @error('password_confirmation') is-invalid @enderror"
+                    required
+                    autocomplete="new-password"
+                    placeholder="Confirm your password"
+                >
+
+                @error('password_confirmation')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+
+            </div>
+
+            {{-- Register Button --}}
+            <button
+                type="submit"
+                class="btn btn-theme d-block w-100 fw-500 mb-2"
+            >
+                Sign Up
+            </button>
+
+            {{-- Login Link --}}
+            <div class="text-center text-muted mt-2">
+
+                Already registered?
+
+                <a href="{{ route('login') }}">
+                    Sign In
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@endsection

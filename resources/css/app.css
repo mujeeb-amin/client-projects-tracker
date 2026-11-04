@@ -9,3 +9,25 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.tracker-dashboard-hero {
+    background: linear-gradient(
+        135deg,
+        #3044a5,
+        #6775e8
+    );
+
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.tracker-dashboard-illustration {
+    width: 100%;
+    height: 180px;
+
+    background-image: url('../images/studio/dashboard.svg');
+
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}

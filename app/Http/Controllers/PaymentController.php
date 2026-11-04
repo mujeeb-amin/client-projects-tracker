@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Client;
+use Illuminate\Validation\Rule;
 use App\Models\Project;
 use Illuminate\Http\Request;
 
@@ -12,13 +14,16 @@ class PaymentController extends Controller
     {
         $payments = Payment::with('project.client')->get();
 
-        return view('payments.index', compact('payments'));
+        $editProjects = Project::with('client')->get();
+        return view('payments.index', compact('payments','editProjects'));
     }
 
-    public function create(){
-        $projects = Project::all();
+    public function create()
+    {
+        $clients = Client::orderBy('name')->get(['id', 'name']);
+        $projects = Project::orderBy('title')->get(['id', 'client_id', 'title']);
 
-        return view('payments.create', compact('projects'));
+        return view('payments.create', compact('clients', 'projects'));
     }
 
     public function store(Request $request)
@@ -29,6 +34,14 @@ class PaymentController extends Controller
             'amount' => 'required|numeric|gt:0',
             'payment_date' => 'required|date',
             'note' => 'nullable|string',
+        ]);
+
+        $request->validate([
+            'client_id' => ['required', 'exists:clients,id'],
+            'project_id' => [
+                'required',
+                Rule::exists('projects', 'id')->where('client_id', $request->input('client_id')),
+            ],
         ]);
 
         $project = Project::findOrFail($request->project_id);
@@ -58,8 +71,8 @@ class PaymentController extends Controller
 
         $payment->save();
 
-        return redirect('/payments')
-            ->with('success', 'Payment added successfully.');
+        // Display the newly saved payment receipt immediately.
+        return redirect()->route('payments.receipt', ['id' => $payment->id]);
     }
 
     public function edit($id)
@@ -68,7 +81,12 @@ class PaymentController extends Controller
 
         $projects = Project::all();
 
-        return view('payments.edit', compact('payment', 'projects'));
+        if (request()->expectsJson()) return response()->json([
+            'id'=>$payment->id, 'project_id'=>$payment->project_id,
+            'task'=>$payment->task, 'amount'=>$payment->amount,
+            'payment_date'=>$payment->payment_date, 'note'=>$payment->note
+        ]);
+        return view('payments.edit', compact('payment','projects'));
     }
 
     public function update(Request $request, $id)
@@ -95,11 +113,11 @@ class PaymentController extends Controller
         );
 
         if (round((float) $request->amount, 2) > $remaining) {
-            return back()
-                ->withErrors([
-                    'amount' => 'Payment exceeds remaining balance.'
-                ])
-                ->withInput();
+            if ($request->expectsJson()) {
+                return response()->json(['message'=>'Payment exceeds remaining balance.',
+                   'errors'=>['amount'=>['Payment exceeds remaining balance.']]],422);
+            }
+            return back()->withErrors(['amount'=>'Payment exceeds remaining balance.'])->withInput();
         }
 
         $payment->project_id = $request->project_id;
@@ -110,8 +128,17 @@ class PaymentController extends Controller
 
         $payment->save();
 
-        return redirect('/payments')
-            ->with('success', 'Payment updated successfully.');
+        if ($request->expectsJson()) {
+            $payment->load('project.client');
+            return response()->json([
+                'id'=>$payment->id, 'client_name'=>$payment->project?->client?->name,
+                'project_title'=>$payment->project?->title,
+                'task'=>$payment->task,'amount'=>$payment->amount,
+                'payment_date'=>$payment->payment_date,'note'=>$payment->note,
+                'total_received'=>Payment::sum('amount')
+            ]);
+        }
+        return redirect('/payments')->with('success', 'Payment updated successfully.');
     }
 
     public function destroy($id)
@@ -120,11 +147,66 @@ class PaymentController extends Controller
 
         $payment->delete();
 
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Deleted successfully.', 'id' => (int) $id]);
+        }
+
         return redirect('/payments')
             ->with('success', 'Payment deleted successfully.');
     }
 
 
 
+
+    public function receipt($id)
+    {
+        $payment = Payment::with('project.client')->findOrFail($id);
+        $project = $payment->project;
+        $totalReceived = (float) $project->payments()->sum('amount');
+        $balance = round((float) $project->agreed_price - $totalReceived, 2);
+
+        return view('payments.receipt', compact('payment', 'project', 'totalReceived', 'balance'));
+    }
+
+public function downloadReceipt($id)
+{
+    $payment = Payment::with('project.client')->findOrFail($id);
+
+    $project = $payment->project;
+
+    $totalReceived = (float) $project->payments()
+        ->sum('amount');
+
+    $balance = round(
+        (float) $project->agreed_price - $totalReceived,
+        2
+    );
+
+    $html = view('payments.receipt-pdf', compact(
+        'payment',
+        'project',
+        'totalReceived',
+        'balance'
+    ))->render();
+
+    $options = new \Dompdf\Options();
+
+    $options->set('isRemoteEnabled', false);
+
+    $pdf = new \Dompdf\Dompdf($options);
+
+    $pdf->loadHtml($html);
+
+    $pdf->setPaper('A4', 'portrait');
+
+    $pdf->render();
+
+    return response($pdf->output(), 200, [
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' =>
+            'attachment; filename="payment-receipt-' .
+            $payment->id . '.pdf"',
+    ]);
+}
 
 }

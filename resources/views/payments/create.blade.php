@@ -22,35 +22,35 @@
 
                     <div class="row g-3">
 
+
+                        <!-- Client -->
+                        <div class="col-md-6">
+                            <label for="client_id" class="form-label">Client</label>
+                            <select id="client_id" name="client_id"
+                                    class="form-select @error('client_id') is-invalid @enderror" required>
+                                <option value="">Select Client</option>
+                                @foreach($clients as $client)
+                                    <option value="{{ $client->id }}" @selected(old('client_id') == $client->id)>
+                                        {{ $client->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('client_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <!-- Project -->
                         <div class="col-md-6">
-                            <label for="project_id" class="form-label">
-                                Project
-                            </label>
-
-                            <select
-                                id="project_id"
-                                name="project_id"
-                                class="form-select @error('project_id') is-invalid @enderror"
-                                required
-                            >
-                                <option value="">Select Project</option>
-
+                            <label for="project_id" class="form-label">Project</label>
+                            <select id="project_id" name="project_id"
+                                    class="form-select @error('project_id') is-invalid @enderror" required disabled>
+                                <option value="">Select a client first</option>
                                 @foreach($projects as $project)
-                                    <option
-                                        value="{{ $project->id }}"
-                                        @selected(old('project_id') == $project->id)
-                                    >
+                                    <option value="{{ $project->id }}" data-client-id="{{ $project->client_id }}"
+                                            @selected(old('project_id') == $project->id)>
                                         {{ $project->title }}
                                     </option>
                                 @endforeach
                             </select>
-
-                            @error('project_id')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
+                            @error('project_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         <!-- Task -->
@@ -165,3 +165,33 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const client = document.getElementById('client_id');
+    const project = document.getElementById('project_id');
+    const original = project.value;
+    function filterProjects(preserve = false) {
+        const selectedClient = client.value;
+        let visible = 0;
+        for (const option of project.options) {
+            if (!option.value) continue;
+            const show = Boolean(selectedClient) && option.dataset.clientId === selectedClient;
+            option.hidden = !show;
+            option.disabled = !show;
+            if (show) visible++;
+        }
+        project.disabled = !selectedClient || !visible;
+        project.options[0].textContent = !selectedClient
+            ? 'Select a client first'
+            : (visible ? 'Select Project' : 'No projects for this client');
+        if (!preserve || !project.selectedOptions[0] || project.selectedOptions[0].disabled) {
+            project.value = '';
+        }
+    }
+    filterProjects(true);
+    client.addEventListener('change', () => filterProjects(false));
+});
+</script>
+@endpush
