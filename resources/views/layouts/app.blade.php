@@ -511,6 +511,10 @@
                 font-size: 12px;
             }
         }
+
+        .profile-avatar > [hidden] {
+            display: none !important;
+        }
     </style>
 
     @stack('styles')
@@ -583,7 +587,8 @@
         <div id="userProfileDetails" hidden>
 
             <div class="profile-avatar" aria-hidden="true">
-                <svg viewBox="0 0 24 24"
+                <img id="profileDialogAvatarImage" class="profile-header-image" alt="" hidden>
+                <svg id="profileDialogAvatarFallback" viewBox="0 0 24 24"
                      fill="none"
                      stroke="currentColor"
                      stroke-width="1.8"
@@ -696,6 +701,8 @@
 ])
 
 @stack('scripts')
+
+@include('partials.table-pagination')
 
 <script>
 (function () {
@@ -832,7 +839,17 @@
         };
 
         const requestUrl = @json(route('profile.me'));
+        const avatar = document.getElementById('profileDialogAvatarImage');
+        const avatarFallback = document.getElementById('profileDialogAvatarFallback');
         let requestController = null;
+
+        function showAvatar(loaded) {
+            avatar.hidden = !loaded;
+            avatarFallback.toggleAttribute('hidden', loaded);
+        }
+
+        avatar.addEventListener('load', () => showAvatar(true));
+        avatar.addEventListener('error', () => showAvatar(false));
 
         function showValue(key, value) {
             document.getElementById(fields[key]).textContent = value ?? '—';
@@ -878,6 +895,16 @@
 
                 showValue('name', data.name);
                 showValue('email', data.email);
+
+                if (data.avatar_url !== avatar.getAttribute('src')) {
+                    showAvatar(false);
+
+                    if (data.avatar_url) {
+                        avatar.src = data.avatar_url;
+                    } else {
+                        avatar.removeAttribute('src');
+                    }
+                }
 
                 details.hidden = false;
                 status.hidden = true;
@@ -932,6 +959,129 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
+});
+
+document.querySelectorAll('select[name="client_id"]').forEach(function (select) {
+    const picker = document.createElement('div');
+
+    picker.innerHTML = `
+        <input type="search" class="form-control" placeholder="Select Client"
+               autocomplete="off" aria-label="Client">
+        <div class="list-group mt-1" style="max-height: 12rem; overflow-y: auto" hidden></div>
+        <div class="small text-danger mt-1" role="alert" hidden></div>
+    `;
+
+    const [search, results, error] = picker.children;
+    const label = select.labels[0];
+
+    search.id = select.id + '_search';
+    if (label) label.htmlFor = search.id;
+
+    select.after(picker);
+    select.hidden = true;
+
+    function sync() {
+        search.value = select.value ? select.selectedOptions[0].text.trim() : '';
+        error.hidden = true;
+        search.removeAttribute('aria-invalid');
+    }
+
+    function setClient(value) {
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function render(query = '') {
+        results.replaceChildren();
+        query = query.trim().toLowerCase();
+
+        for (const option of select.options) {
+            const name = option.text.trim();
+
+            if (!option.value || option.disabled || !name.toLowerCase().includes(query)) {
+                continue;
+            }
+
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action';
+            item.textContent = name;
+
+            item.addEventListener('click', function () {
+                setClient(option.value);
+                search.focus();
+                results.hidden = true;
+            });
+
+            results.append(item);
+        }
+
+        if (!results.childElementCount) {
+            const empty = document.createElement('div');
+            empty.className = 'list-group-item text-muted';
+            empty.textContent = 'No clients found.';
+            results.append(empty);
+        }
+
+        results.hidden = false;
+    }
+
+    search.addEventListener('focus', function () {
+        search.select();
+        render();
+    });
+
+    search.addEventListener('click', function () {
+        if (results.hidden) render(select.value ? '' : search.value);
+    });
+
+    search.addEventListener('input', function () {
+        const query = search.value;
+
+        if (select.value) {
+            setClient('');
+            search.value = query;
+        }
+
+        render(query);
+    });
+
+    picker.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !results.hidden) {
+            event.preventDefault();
+            event.stopPropagation();
+            search.focus();
+            results.hidden = true;
+            sync();
+        }
+
+        if (event.key === 'Enter' && event.target === search && !results.hidden) {
+            event.preventDefault();
+            results.querySelector('button')?.click();
+        }
+    });
+
+    picker.addEventListener('focusout', function (event) {
+        if (!picker.contains(event.relatedTarget)) {
+            results.hidden = true;
+            sync();
+        }
+    });
+
+    select.addEventListener('change', sync);
+    select.form?.addEventListener('reset', function () {
+        setTimeout(sync, 0);
+    });
+
+    select.addEventListener('invalid', function (event) {
+        event.preventDefault();
+        search.focus();
+        search.setAttribute('aria-invalid', 'true');
+        error.textContent = 'Please select a client from the list.';
+        error.hidden = false;
+    });
+
+    sync();
 });
 </script>
 

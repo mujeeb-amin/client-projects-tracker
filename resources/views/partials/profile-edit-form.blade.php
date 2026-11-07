@@ -66,10 +66,34 @@
     const notice = document.getElementById('profileEditNotice');
     const save = document.getElementById('saveOwnProfile');
 
+    // Update the image in the header and My Profile dialog.
+function updateProfileImages(imageUrl) {
+    if (!imageUrl) return;
+
+    document.querySelectorAll('.header-user-icon').forEach(function (container) {
+        const image = document.createElement('img');
+
+        image.src = imageUrl;
+        image.alt = '';
+        image.className = 'profile-header-image';
+
+        container.replaceChildren(image);
+    });
+
+    const profileImage = document.getElementById('profileDialogAvatarImage');
+
+    if (profileImage) {
+        profileImage.src = imageUrl;
+    }
+}
+
     cancel.addEventListener('click', function () {
+
         form.reset();
+
         notice.className = 'alert d-none';
         notice.textContent = '';
+
     });
 
     form.addEventListener('submit', async function (event) {
@@ -83,6 +107,7 @@
         notice.textContent = '';
 
         const payload = new FormData(form);
+
         payload.append('_method', 'PUT');
 
         try {
@@ -119,43 +144,31 @@
 
             if (data.user) {
 
+                // Update name in the header.
                 document.querySelectorAll('.header-user-name')
                     .forEach(function (element) {
                         element.textContent = data.user.name;
                     });
 
+                // Update name in My Profile.
                 const profileName = document.getElementById('profileName');
 
                 if (profileName) {
                     profileName.textContent = data.user.name;
                 }
 
+                // Update name in the edit form.
                 const editName = document.getElementById('editOwnName');
 
                 if (editName) {
                     editName.value = data.user.name;
                 }
 
-                if (data.user.avatar_url) {
-
-                    document.querySelectorAll('.header-user-icon')
-                        .forEach(function (element) {
-
-                            const image = document.createElement('img');
-
-                            image.src = data.user.avatar_url;
-                            image.alt = '';
-                            image.className = 'profile-header-image';
-
-                            element.replaceChildren(image);
-
-                        });
-
-                }
-
+                // Update photo in both places.
+                updateProfileImages(data.user.avatar_url);
             }
 
-            notice.textContent = 'Profile updated successfully.';
+            notice.textContent = data.message || 'Profile updated successfully.';
             notice.className = 'alert alert-success';
 
         } catch (error) {

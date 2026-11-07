@@ -6,15 +6,49 @@
 <h5>Create Normal User</h5>
 <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data" class="row g-3">@csrf
 <div class="col-md-6"><label class="form-label">Name</label><input name="name" class="form-control" required></div>
-<div class="col-md-6"><label class="form-label">Email</label><input name="email" type="email" class="form-control" required></div>
-<div class="col-md-6"><label class="form-label">Password</label><input name="password" type="password" class="form-control" minlength="8" required></div>
-<div class="col-md-6"><label class="form-label">Confirm Password</label><input name="password_confirmation" type="password" class="form-control" minlength="8" required></div>
+<div class="col-md-6"><label class="form-label">Email</label><input name="email" type="email" class="form-control" autocomplete="off" required></div>
+<div class="col-md-6">
+    <label for="createUserPassword" class="form-label">Password</label>
+    <div class="password-field">
+        <input id="createUserPassword" name="password" type="password"
+               class="form-control" autocomplete="new-password" minlength="8" required>
+        <button type="button" class="btn password-toggle"
+                data-toggle-password="createUserPassword" aria-controls="createUserPassword"
+                aria-label="Show password" aria-pressed="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                <circle cx="12" cy="12" r="2.5"/>
+                <path class="password-eye-slash" d="M3 3l18 18"/>
+            </svg>
+        </button>
+    </div>
+</div>
+<div class="col-md-6">
+    <label for="createUserPasswordConfirmation" class="form-label">Confirm Password</label>
+    <div class="password-field">
+        <input id="createUserPasswordConfirmation" name="password_confirmation" type="password"
+               class="form-control" autocomplete="new-password" minlength="8" required>
+        <button type="button" class="btn password-toggle"
+                data-toggle-password="createUserPasswordConfirmation" aria-controls="createUserPasswordConfirmation"
+                aria-label="Show confirm password" aria-pressed="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                <circle cx="12" cy="12" r="2.5"/>
+                <path class="password-eye-slash" d="M3 3l18 18"/>
+            </svg>
+        </button>
+    </div>
+</div>
 <div class="col-md-6"><label class="form-label">Profile Photo (optional)</label><input name="avatar" type="file" accept="image/jpeg,image/png,image/webp" class="form-control"></div>
 <div class="col-12"><h6 class="mb-1">Access Permissions</h6><p class="small text-muted mb-2">Select allowed actions. All permissions are off by default.</p>@include('users.partials.permissions-grid', ['prefix' => 'createPerm'])</div>
 <div class="col-12"><button class="btn btn-primary">Create User</button></div>
 </form></div></div>
 <div class="card"><div class="card-body"><h5>All Users</h5><div class="table-responsive">
-<table class="table table-striped align-middle"><thead><tr><th>Photo</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<table class="table table-striped align-middle" data-pagination="5" data-pagination-label="Users"><thead><tr><th>Photo</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 @foreach($users as $user)
 <tr>
 <td>@if($user->avatar_path)<img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($user->avatar_path) }}" alt="" class="user-table-avatar" width="40" height="40">@else<span class="text-muted">—</span>@endif</td>
@@ -57,6 +91,32 @@
 @push('styles')<style>
 .permission-grid th:first-child {min-width:125px}.permission-grid td {text-align:center}.user-edit-dialog {width:min(94vw,520px);max-height:90dvh;overflow-y:auto;border:0;border-radius:12px;padding:24px;box-shadow:0 20px 60px #0004}
 .user-edit-dialog::backdrop{background:#11182799}.user-table-avatar{object-fit:cover;border-radius:50%}
+
+.password-field {
+    position: relative;
+}
+.password-field .form-control {
+    padding-inline-end: 3rem;
+}
+.password-toggle {
+    position: absolute;
+    inset-inline-end: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2rem;
+    padding: 0;
+    color: #475569;
+}
+.password-toggle .password-eye-slash {
+    display: none;
+}
+.password-toggle[aria-pressed="true"] .password-eye-slash {
+    display: inline;
+}
 </style>@endpush
 @push('scripts')<script>
 (()=>{
@@ -140,6 +200,20 @@
     finally {confirm.disabled=false}
   });
 })();
+</script>
+@endpush
+@push('scripts')
+<script>
+document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+    const input = document.getElementById(button.dataset.togglePassword);
+
+    button.addEventListener('click', function () {
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+
+        button.setAttribute('aria-pressed', String(show));
+    });
+});
 </script>
 @endpush
 @endsection

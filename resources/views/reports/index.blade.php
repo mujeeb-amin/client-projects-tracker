@@ -296,12 +296,12 @@
 
             <div class="table-responsive">
 
-                <table class="table table-hover table-striped align-middle">
+                <table class="table table-hover table-striped align-middle" data-pagination="10" data-pagination-label="Payment report">
 
                     <thead class="table-dark">
 
                         <tr>
-                            <th>ID</th>
+                            <th scope="col">No.</th>
                             <th>Client</th>
                             <th>Project</th>
                             <th>Task</th>
@@ -318,9 +318,7 @@
 
                             <tr>
 
-                                <td>
-                                    {{ $payment->id }}
-                                </td>
+                                <td data-row-number>{{ $loop->iteration }}</td>
 
                                 <td>
                                     {{ $payment->project?->client?->name ?? 'N/A' }}
@@ -393,12 +391,12 @@
 
             <div class="table-responsive">
 
-                <table class="table table-hover table-striped align-middle">
+                <table class="table table-hover table-striped align-middle" data-pagination="10" data-pagination-label="Project report">
 
                     <thead class="table-dark">
 
                         <tr>
-                            <th>ID</th>
+                            <th scope="col">No.</th>
                             <th>Client</th>
                             <th>Project</th>
                             <th>Agreed</th>
@@ -425,9 +423,7 @@
 
                             <tr>
 
-                                <td>
-                                    {{ $project->id }}
-                                </td>
+                                <td data-row-number>{{ $loop->iteration }}</td>
 
                                 <td>
                                     {{ $project->client?->name ?? 'N/A' }}

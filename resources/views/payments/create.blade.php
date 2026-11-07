@@ -22,42 +22,115 @@
 
                     <div class="row g-3">
 
-
                         <!-- Client -->
                         <div class="col-md-6">
                             <label for="client_id" class="form-label">Client</label>
+
                             <select id="client_id" name="client_id"
-                                    class="form-select @error('client_id') is-invalid @enderror" required>
+                                class="form-select @error('client_id') is-invalid @enderror" required>
+
                                 <option value="">Select Client</option>
+
                                 @foreach($clients as $client)
-                                    <option value="{{ $client->id }}" @selected(old('client_id') == $client->id)>
+                                    <option value="{{ $client->id }}"
+                                        @selected(old('client_id') == $client->id)>
                                         {{ $client->name }}
                                     </option>
                                 @endforeach
+
                             </select>
-                            @error('client_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+
+                            @error('client_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
+
                         <!-- Project -->
                         <div class="col-md-6">
                             <label for="project_id" class="form-label">Project</label>
+
                             <select id="project_id" name="project_id"
-                                    class="form-select @error('project_id') is-invalid @enderror" required disabled>
+                                class="form-select @error('project_id') is-invalid @enderror"
+                                required disabled>
+
                                 <option value="">Select a client first</option>
+
                                 @foreach($projects as $project)
-                                    <option value="{{ $project->id }}" data-client-id="{{ $project->client_id }}"
-                                            @selected(old('project_id') == $project->id)>
+                                    <option
+                                        value="{{ $project->id }}"
+                                        data-client-id="{{ $project->client_id }}"
+                                        data-price="{{ $project->agreed_price }}"
+                                        data-paid="{{ $project->total_paid ?? 0 }}"
+                                        @selected(old('project_id') == $project->id)
+                                    >
                                         {{ $project->title }}
                                     </option>
                                 @endforeach
+
                             </select>
-                            @error('project_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+
+                            @error('project_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- PROJECT FINANCIAL SUMMARY -->
+                        <div class="col-12" id="projectFinancialSummary" hidden>
+
+                            <div class="border rounded-3 p-3 bg-light">
+
+                                <h6 class="mb-3">
+                                    <i class="bi bi-wallet2 me-1"></i>
+                                    Project Financial Summary
+                                </h6>
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-4">
+                                        <div class="bg-white border rounded-3 p-3 h-100">
+                                            <div class="text-muted small">
+                                                Project Price
+                                            </div>
+
+                                            <h4 class="mb-0 mt-2 text-dark" id="projectPrice">
+                                                $0.00
+                                            </h4>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="bg-white border rounded-3 p-3 h-100">
+                                            <div class="text-muted small">
+                                                Total Paid
+                                            </div>
+
+                                            <h4 class="mb-0 mt-2 text-success" id="totalPaid">
+                                                $0.00
+                                            </h4>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="bg-white border rounded-3 p-3 h-100">
+                                            <div class="text-muted small">
+                                                Remaining Balance
+                                            </div>
+
+                                            <h4 class="mb-0 mt-2 text-danger" id="remainingBalance">
+                                                $0.00
+                                            </h4>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
                         </div>
 
                         <!-- Task -->
                         <div class="col-md-6">
-                            <label for="task" class="form-label">
-                                Task
-                            </label>
+                            <label for="task" class="form-label">Task</label>
 
                             <input
                                 id="task"
@@ -69,17 +142,13 @@
                             >
 
                             @error('task')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <!-- Amount -->
                         <div class="col-md-6">
-                            <label for="amount" class="form-label">
-                                Amount ($)
-                            </label>
+                            <label for="amount" class="form-label">Amount ($)</label>
 
                             <input
                                 id="amount"
@@ -93,9 +162,7 @@
                             >
 
                             @error('amount')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
@@ -115,17 +182,13 @@
                             >
 
                             @error('payment_date')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <!-- Note -->
                         <div class="col-12">
-                            <label for="note" class="form-label">
-                                Note
-                            </label>
+                            <label for="note" class="form-label">Note</label>
 
                             <textarea
                                 id="note"
@@ -136,14 +199,13 @@
                             >{{ old('note') }}</textarea>
 
                             @error('note')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                     </div>
 
+                    <!-- Buttons -->
                     <div class="d-flex justify-content-end gap-2 mt-4">
 
                         <a href="/payments" class="btn btn-secondary">
@@ -169,29 +231,94 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
     const client = document.getElementById('client_id');
     const project = document.getElementById('project_id');
-    const original = project.value;
+
+    const summary = document.getElementById('projectFinancialSummary');
+
+    const projectPrice = document.getElementById('projectPrice');
+    const totalPaid = document.getElementById('totalPaid');
+    const remainingBalance = document.getElementById('remainingBalance');
+
+    function formatMoney(value) {
+        return '$' + Number(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    // Display financial information for selected project
+    function updateFinancialSummary() {
+
+        const selectedOption = project.selectedOptions[0];
+
+        if (!selectedOption || !selectedOption.value || selectedOption.disabled) {
+            summary.hidden = true;
+            return;
+        }
+
+        const price = Number(selectedOption.dataset.price || 0);
+        const paid = Number(selectedOption.dataset.paid || 0);
+        const remaining = Math.max(0, price - paid);
+
+        projectPrice.textContent = formatMoney(price);
+        totalPaid.textContent = formatMoney(paid);
+        remainingBalance.textContent = formatMoney(remaining);
+
+        summary.hidden = false;
+    }
+
+    // Filter projects according to selected client
     function filterProjects(preserve = false) {
+
         const selectedClient = client.value;
         let visible = 0;
+
         for (const option of project.options) {
+
             if (!option.value) continue;
-            const show = Boolean(selectedClient) && option.dataset.clientId === selectedClient;
+
+            const show =
+                Boolean(selectedClient) &&
+                option.dataset.clientId === selectedClient;
+
             option.hidden = !show;
             option.disabled = !show;
+
             if (show) visible++;
         }
+
         project.disabled = !selectedClient || !visible;
+
         project.options[0].textContent = !selectedClient
             ? 'Select a client first'
             : (visible ? 'Select Project' : 'No projects for this client');
-        if (!preserve || !project.selectedOptions[0] || project.selectedOptions[0].disabled) {
+
+        if (
+            !preserve ||
+            !project.selectedOptions[0] ||
+            project.selectedOptions[0].disabled
+        ) {
             project.value = '';
         }
+
+        updateFinancialSummary();
     }
+
+    // Initial loading
     filterProjects(true);
-    client.addEventListener('change', () => filterProjects(false));
+
+    // When client changes
+    client.addEventListener('change', function () {
+        filterProjects(false);
+    });
+
+    // When project changes
+    project.addEventListener('change', function () {
+        updateFinancialSummary();
+    });
+
 });
 </script>
 @endpush

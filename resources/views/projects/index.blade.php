@@ -51,14 +51,32 @@
 
     <div class="card-body">
 
+        {{-- ================= PROJECTS LIVE SEARCH ================= --}}
+        <div class="row g-2 align-items-center mb-3">
+            <div class="col-12 col-md-6 col-lg-5">
+                <label for="projectsSearch" class="form-label mb-1">
+                    Search Projects
+                </label>
+                <input
+                    type="search"
+                    id="projectsSearch"
+                    class="form-control"
+                    placeholder="Search by client, project title, price or status..."
+                    autocomplete="off">
+            </div>
+            <div class="col-12 col-md-auto">
+                <small id="projectsSearchCount" class="text-muted" aria-live="polite"></small>
+            </div>
+        </div>
+
         <div class="table-responsive">
 
-            <table class="table table-hover table-striped align-middle">
+            <table class="table table-hover table-striped align-middle" 	data-pagination="5" data-pagination-label="Projects">
 
                 <thead class="table-dark">
 
                     <tr>
-                        <th>ID</th>
+                        <th scope="col">No.</th>
                         <th>Client</th>
                         <th>Project Title</th>
                         <th>Agreed Price</th>
@@ -84,9 +102,7 @@
                         <tr data-row-id="{{ $project->id }}">
 
                             {{-- ID --}}
-                            <td>
-                                {{ $project->id }}
-                            </td>
+                            <td data-row-number>{{ $loop->iteration }}</td>
 
                             {{-- Client --}}
                             <td>
@@ -211,6 +227,14 @@
                         </tr>
 
                     @endforelse
+
+                    <tr id="projectsSearchEmpty" hidden>
+                        <td
+                            colspan="{{ $canManage ? 9 : 8 }}"
+                            class="text-center text-muted py-4">
+                            No matching projects found.
+                        </td>
+                    </tr>
 
                 </tbody>
 
@@ -648,23 +672,22 @@
                             `${base}/${selectedId}/edit`
                         );
 
+                editFields.forEach(key => {
+                    const input = form.elements.namedItem(key);
 
-                        editFields.forEach(key => {
+                    if (input) {
+                        input.value = record[key] == null
+                            ? ''
+                            : String(record[key]).slice(
+                                0,
+                                key === 'deadline' ? 10 : undefined
+                            );
 
-                            const input = form.elements.namedItem(key);
-
-                            if (input) {
-
-                                input.value = record[key] == null
-                                    ? ''
-                                    : String(record[key]).slice(
-                                        0,
-                                        key === 'deadline' ? 10 : undefined
-                                    );
-
-                            }
-
-                        });
+                        if (key === 'client_id') {
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                });
 
 
                     } catch (error) {
@@ -854,6 +877,58 @@
 
 @endif
 
+
+{{-- ================= PROJECTS LIVE SEARCH SCRIPT ================= --}}
+@push('scripts')
+    <script>
+        (() => {
+            const searchInput = document.getElementById('projectsSearch');
+            const searchCount = document.getElementById('projectsSearchCount');
+            const emptyRow = document.getElementById('projectsSearchEmpty');
+
+            if (!searchInput) return;
+
+            const projectRows = Array.from(
+                document.querySelectorAll('tbody tr[data-row-id]')
+            );
+
+            function filterProjects() {
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                let visibleCount = 0;
+
+                projectRows.forEach(row => {
+                    // Client, title, agreed/received/remaining amounts, deadline and status.
+                    const searchableText = [
+                        row.cells[1]?.textContent || '',
+                        row.cells[2]?.textContent || '',
+                        row.cells[3]?.textContent || '',
+                        row.cells[4]?.textContent || '',
+                        row.cells[5]?.textContent || '',
+                        row.cells[6]?.textContent || '',
+                        row.cells[7]?.textContent || ''
+                    ].join(' ').toLocaleLowerCase();
+
+                    const matches = searchableText.includes(query);
+                    row.hidden = !matches;
+                    if (matches) visibleCount++;
+                });
+
+                if (emptyRow) {
+                    emptyRow.hidden = projectRows.length === 0 || visibleCount !== 0;
+                }
+
+                if (searchCount) {
+                    searchCount.textContent = query
+                        ? `${visibleCount} matching project(s)`
+                        : `${projectRows.length} project(s)`;
+                }
+            }
+
+            searchInput.addEventListener('input', filterProjects);
+            filterProjects();
+        })();
+    </script>
+@endpush
 
 @endsection
 

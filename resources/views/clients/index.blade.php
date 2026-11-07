@@ -46,14 +46,32 @@
 
     <div class="card-body">
 
+        {{-- ================= CLIENTS LIVE SEARCH ================= --}}
+        <div class="row g-2 align-items-center mb-3">
+            <div class="col-12 col-md-6 col-lg-5">
+                <label for="clientsSearch" class="form-label mb-1">
+                    Search Clients
+                </label>
+                <input
+                    type="search"
+                    id="clientsSearch"
+                    class="form-control"
+                    placeholder="Search by name, phone, email, company or address..."
+                    autocomplete="off">
+            </div>
+            <div class="col-12 col-md-auto">
+                <small id="clientsSearchCount" class="text-muted" aria-live="polite"></small>
+            </div>
+        </div>
+
         <div class="table-responsive">
 
-            <table class="table table-hover table-striped align-middle">
+            <table class="table table-hover table-striped align-middle" data-pagination="4" data-pagination-label="Clients">
 
                 <thead class="table-dark">
 
                     <tr>
-                        <th>ID</th>
+                        <th scope="col">No.</th>
                         <th>Name</th>
                         <th>Phone</th>
                         <th>Email</th>
@@ -73,9 +91,7 @@
 
                         <tr data-row-id="{{ $client->id }}">
 
-                            <td>
-                                {{ $client->id }}
-                            </td>
+                            <td data-row-number>{{ $loop->iteration }}</td>
 
                             <td class="fw-semibold">
                                 {{ $client->name }}
@@ -166,6 +182,15 @@
                         </tr>
 
                     @endforelse
+
+                    {{-- Shown only when a search has no matching clients --}}
+                    <tr id="clientsSearchEmpty" hidden>
+                        <td
+                            colspan="{{ $canManage ? 7 : 6 }}"
+                            class="text-center text-muted py-4">
+                            No matching clients found.
+                        </td>
+                    </tr>
 
                 </tbody>
 
@@ -732,5 +757,59 @@
 
 @endif
 
+
+{{-- ================= CLIENTS LIVE SEARCH SCRIPT ================= --}}
+@push('scripts')
+    <script>
+        (() => {
+            const searchInput = document.getElementById('clientsSearch');
+            const searchCount = document.getElementById('clientsSearchCount');
+            const emptyRow = document.getElementById('clientsSearchEmpty');
+
+            if (!searchInput) {
+                return;
+            }
+
+            const clientRows = Array.from(
+                document.querySelectorAll('tbody tr[data-row-id]')
+            );
+
+            function filterClients() {
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                let visibleCount = 0;
+
+                clientRows.forEach(row => {
+                    // Search across Name, Phone, Email, Company and Address.
+                    const searchableText = Array.from(row.cells)
+                        .slice(1, 6)
+                        .map(cell => cell.textContent || '')
+                        .join(' ')
+                        .toLocaleLowerCase();
+
+                    const matches = searchableText.includes(query);
+
+                    row.hidden = !matches;
+
+                    if (matches) {
+                        visibleCount++;
+                    }
+                });
+
+                if (emptyRow) {
+                    emptyRow.hidden = clientRows.length === 0 || visibleCount !== 0;
+                }
+
+                if (searchCount) {
+                    searchCount.textContent = query
+                        ? `${visibleCount} matching client(s)`
+                        : `${clientRows.length} client(s)`;
+                }
+            }
+
+            searchInput.addEventListener('input', filterClients);
+            filterClients();
+        })();
+    </script>
+@endpush
 
 @endsection

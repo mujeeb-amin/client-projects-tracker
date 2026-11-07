@@ -360,7 +360,7 @@
 
             </div>
 
-            <div class="card-body">
+            <div class="card-body" data-dashboard-page="projects_page" tabindex="-1">
 
                 <div class="table-responsive">
 
@@ -435,6 +435,8 @@
 
                 </div>
 
+                {{ $recentProjects->links('pagination::bootstrap-5') }}
+
             </div>
 
         </div>
@@ -464,7 +466,7 @@
 
             </div>
 
-            <div class="card-body">
+            <div class="card-body" data-dashboard-page="payments_page" tabindex="-1">
 
                 <div class="table-responsive">
 
@@ -525,6 +527,8 @@
 
                 </div>
 
+                {{ $recentPayments->links('pagination::bootstrap-5') }}
+
             </div>
 
         </div>
@@ -561,3 +565,72 @@
 @endif
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('click', async function (event) {
+    const link = event.target.closest('a.page-link[href]');
+    const panel = link?.closest('[data-dashboard-page]');
+
+    if (!panel || event.defaultPrevented || event.button !== 0 ||
+        event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+    }
+
+    const pageKey = panel.dataset.dashboardPage;
+    const linkUrl = new URL(link.href);
+    const page = linkUrl.searchParams.get(pageKey);
+
+    if (linkUrl.origin !== window.location.origin || !page) return;
+
+    event.preventDefault();
+    if (panel.getAttribute('aria-busy') === 'true') return;
+
+    const requestUrl = new URL(window.location.href);
+    requestUrl.searchParams.set(pageKey, page);
+
+    panel.querySelector('[data-dashboard-page-error]')?.remove();
+    panel.setAttribute('aria-busy', 'true');
+
+    try {
+        const response = await fetch(requestUrl, { credentials: 'same-origin' });
+
+        if (!response.ok) throw new Error('Page request failed.');
+
+        const markup = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const nextPanel = markup.querySelector(`[data-dashboard-page="${pageKey}"]`);
+
+        if (!nextPanel) throw new Error('Table missing from the response.');
+
+        const restoreFocus = panel.contains(document.activeElement);
+        panel.replaceChildren(...nextPanel.childNodes);
+        if (restoreFocus) panel.focus({ preventScroll: true });
+
+        // Merge into the latest URL so each table keeps its own page.
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set(pageKey, page);
+        history.replaceState(history.state, '', currentUrl);
+
+        document.querySelectorAll('[data-dashboard-page] a.page-link[href]').forEach(function (item) {
+            const key = item.closest('[data-dashboard-page]').dataset.dashboardPage;
+            const destination = new URL(item.href);
+            const targetPage = destination.searchParams.get(key);
+            if (!targetPage) return;
+
+            const url = new URL(currentUrl);
+            url.searchParams.set(key, targetPage);
+            item.href = url.href;
+        });
+    } catch (error) {
+        const message = document.createElement('p');
+        message.className = 'text-danger mb-0';
+        message.setAttribute('role', 'alert');
+        message.setAttribute('data-dashboard-page-error', '');
+        message.textContent = 'Could not load this page. Please try again.';
+        panel.append(message);
+    } finally {
+        panel.removeAttribute('aria-busy');
+    }
+});
+</script>
+@endpush
